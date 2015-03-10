@@ -4,7 +4,6 @@
 
 	<groupId>snapsono</groupId>
 	<artifactId>snapsono</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
 	<packaging>war</packaging>
 
 	<name>Snapsono</name>
@@ -20,7 +19,11 @@
 			<artifactId>mysql-connector-java</artifactId>
 			<version>5.1.34</version>
 		</dependency>
-
+		<dependency>
+    		<groupId>org.slf4j</groupId>
+    		<artifactId>integration</artifactId>
+    		<version>1.7.10</version>
+		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
@@ -279,4 +282,5 @@
                 </plugin>
 		</plugins>
 	</build>
+	<version>v1</version>
 </project>
