@@ -11,10 +11,12 @@ import org.apache.commons.httpclient.HttpStatus;
 import snap.sono.demo.connecter.SnapMySQLManager;
 import snap.sono.demo.data.BaseResponse;
 import snap.sono.demo.data.BasicIDNameOBJ;
+import snap.sono.demo.data.Constants;
 import snap.sono.demo.data.SnapProfile;
 import snap.sono.demo.data.SnapProfilesBO;
 import snap.sono.demo.data.SnapsonoItem;
 import snap.sono.demo.data.SnapsonoItems;
+import snap.sono.demo.data.TransactionCreateResponse;
 import snap.sono.demo.server.GeneralServer;
 
 public class GeneralImpl implements GeneralServer {
@@ -44,7 +46,7 @@ public class GeneralImpl implements GeneralServer {
 			logger.severe(e.getMessage());
 			e.printStackTrace();
 		} finally {
-			closeConnection(conn, stmt, rs);
+			SnapMySQLManager.closeConnection(conn, stmt, rs);
 		}
 		return snapProfilesBO;
 	}
@@ -69,12 +71,11 @@ public class GeneralImpl implements GeneralServer {
 			while (rs.next()) {
 				snapsono_id = rs.getLong("snapsono_id");
 			}
-			if (snapsono_id < 0){
+			if (snapsono_id < 0) {
 				sql = String
 						.format("insert into snapsono.mapping_fbid_snapsonoid(fb_id) values(%s);",
 								fbid);
-				logger.info("About to execute " + sql);
-				stmt.execute(sql);
+				SnapMySQLManager.runUpdateSql(sql);
 				sql = String
 						.format("select snapsono_id from snapsono.mapping_fbid_snapsonoid where fb_id = %s;",
 								fbid);
@@ -91,59 +92,31 @@ public class GeneralImpl implements GeneralServer {
 			logger.severe(e.getMessage());
 			e.printStackTrace();
 		} finally {
-			closeConnection(conn, stmt, rs);
+			SnapMySQLManager.closeConnection(conn, stmt, rs);
 		}
 		return null;
 	}
 
-	
-
 	@Override
 	public BaseResponse postItem(String itemName, Long ownerId, String status,
 			String comments, String figUrl, double price, String other) {
-		Connection conn = null;
-		Statement stmt = null;
-		ResultSet rs = null;
 		String msg = "";
 		try {
 			logger.info(">>> Enter getLoginInfo. Ask manager to get connected");
-			conn = SnapMySQLManager.getConnection();
-			logger.info("Get connected");
-			stmt = conn.createStatement();
 			String sql = String
 					.format("insert into snapsono.dim_items (name,owner_id,status,comments,fig_url,price,other)"
-							+" values ('%s',%s,'%s','%s','%s',%s,'%s')",
-							itemName,ownerId,status,comments,figUrl,price,other);
-			logger.info("About to execute " + sql);
-			stmt.execute(sql);
+							+ " values ('%s',%s,'%s','%s','%s',%s,'%s')",
+							itemName, ownerId, status, comments, figUrl, price,
+							other);
+			SnapMySQLManager.runUpdateSql(sql);
 			logger.info("<<< EXIT postItem");
-			return new BaseResponse(HttpStatus.SC_OK,"Item stored in DB");
+			return new BaseResponse(HttpStatus.SC_OK, "Item stored in DB");
 		} catch (Exception e) {
 			logger.severe(e.getMessage());
 			msg = e.getMessage();
 			e.printStackTrace();
-		} finally {
-			closeConnection(conn, stmt, rs);
 		}
-		return new BaseResponse(HttpStatus.SC_BAD_REQUEST,msg);
-	}
-	
-	private void closeConnection(Connection conn, Statement stmt, ResultSet rs) {
-		try {
-			if (conn != null)
-				conn.close();
-		} catch (Exception se2) {
-		}// nothing we can do
-		try {
-			if (stmt != null)
-				stmt.close();
-		} catch (Exception se2) {
-		}// nothing we can do
-		try {
-			if (rs != null)
-				rs.close();
-		} catch (Exception se2) {
-		}// nothing we can do
+		return new BaseResponse(HttpStatus.SC_BAD_REQUEST, msg);
 	}
 
 	@Override
@@ -158,31 +131,83 @@ public class GeneralImpl implements GeneralServer {
 			logger.info("Get connected");
 			stmt = conn.createStatement();
 			String sql = "select * from snapsono.dim_items";
-			if(itemIds!=null && itemIds.length()>0){
+			if (itemIds != null && itemIds.length() > 0) {
 				sql += String.format(" where item_id in (%s) ", itemIds);
 			}
 			logger.info("About to execute " + sql);
 			rs = stmt.executeQuery(sql);
 			logger.info("Finish sql ");
 			while (rs.next()) {
-				list.add(new SnapsonoItem(rs.getLong("item_id"),
-						rs.getString("name"),
-						rs.getLong("owner_id"),
-						rs.getString("status"),
-						rs.getString("comments"),
-						rs.getString("fig_url"),
-						rs.getDouble("price"),
-						rs.getString("other")));
+				list.add(new SnapsonoItem(rs.getLong("item_id"), rs
+						.getString("name"), rs.getLong("owner_id"), rs
+						.getString("status"), rs.getString("comments"), rs
+						.getString("fig_url"), rs.getDouble("price"), rs
+						.getString("other")));
 			}
-			logger.info(String.format("<<< EXIT getItems, %d items found", list.size()));
+			logger.info(String.format("<<< EXIT getItems, %d items found",
+					list.size()));
 			return new SnapsonoItems(list);
 		} catch (Exception e) {
 			logger.severe(e.getMessage());
 			e.printStackTrace();
 		} finally {
-			closeConnection(conn, stmt, rs);
+			SnapMySQLManager.closeConnection(conn, stmt, rs);
 		}
 		return null;
+	}
+
+	@Override
+	public TransactionCreateResponse createTransaction(Long sellerId, Long userId,
+			double latitude, double longtitude, double amount, String itemLists) {
+		String msg = "";
+		Connection conn = null;
+		Statement stmt = null;
+		ResultSet rs = null;
+		try {
+			logger.info(">>> Enter getLoginInfo. Ask manager to get connected");
+			String uuid = String.valueOf(UUID.randomUUID());
+			String sql = String
+					.format("insert into snapsono.dim_transactions_info (seller_id,buyer_id,location_latitude,location_longtitude,transaction_amount,hash_id)"
+							+ " values (%s,%s,%s,%s,%s,%s,%s,%s,'%s')",
+							sellerId,userId,latitude,longtitude,amount,uuid);
+			SnapMySQLManager.runUpdateSql(sql);
+			sql = String.format("select transaction_id from snapsono.dim_transactions_info where hash_id = '%s'", uuid);
+			conn = SnapMySQLManager.getConnection();
+			logger.info("Get connected");
+			stmt = conn.createStatement();
+			logger.info("About to execute " + sql);
+			rs = stmt.executeQuery(sql);
+			logger.info("Finish sql ");
+			long transactionId = -1;
+			while (rs.next()) {
+				transactionId = rs.getLong("transaction_id");
+			}
+			logger.info("Found transactionId = %d " + transactionId);
+			
+			if(transactionId<1)
+				throw new Exception("Cannot initialize transactions!!!");
+			
+			HashSet<String> itemHash = new HashSet<String>();
+			for(String item : itemLists.split(",")){
+				itemHash.add(item);
+			}
+			List<String> sqls = new ArrayList<String>();
+			for(String item : itemHash){
+				sql = String.format("insert into snapsono.dim_transactions_items (transaction_id,item_id)"
+						+" values (%s, %s) ", transactionId, item);
+				sqls.add(sql);
+			}
+			sqls.add(String.format("insert into snapsono.dim_transactions_status_info (transaction_id, status)"
+					+" values (%s, %s) ", transactionId, Constants.INITIAL));
+			
+			logger.info("<<< EXIT postItem");
+			return new TransactionCreateResponse(HttpStatus.SC_OK, "Transaction created, with id = "+transactionId,transactionId);
+		} catch (Exception e) {
+			logger.severe(e.getMessage());
+			msg = e.getMessage();
+			e.printStackTrace();
+		}
+		return new TransactionCreateResponse(HttpStatus.SC_BAD_REQUEST, msg, -1l);
 	}
 
 }

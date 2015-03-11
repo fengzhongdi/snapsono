@@ -19,8 +19,12 @@ import javax.xml.bind.annotation.XmlRootElement;
 
 import snap.sono.demo.data.BaseResponse;
 import snap.sono.demo.data.BasicIDNameOBJ;
+import snap.sono.demo.data.NameLocation;
+import snap.sono.demo.data.NameLocations;
+import snap.sono.demo.data.SnapProfile;
 import snap.sono.demo.data.SnapProfilesBO;
 import snap.sono.demo.data.SnapsonoItems;
+import snap.sono.demo.data.TransactionCreateResponse;
 import snap.sono.demo.impl.GeneralImpl;
 import snap.sono.demo.server.GeneralServer;
 
@@ -46,6 +50,16 @@ public class RestEndPoint {
     public SnapsonoItems getItems(@QueryParam("item_ids") String item_ids) throws Exception{
 		logger.info(String.format("### checking parmeters: item_ids=%s", item_ids));
 		return server.getItems(item_ids);
+    }
+	
+	@GET
+    @Path("/hello")
+	@Produces({MediaType.APPLICATION_JSON})
+	//@Produces({ MediaType.APPLICATION_JSON })
+    public NameLocations getNameLocations() throws Exception{
+		ArrayList<NameLocation> list = new ArrayList<NameLocation>();
+		list.add(new NameLocation("kexi",20,20));
+		return new NameLocations(list);
     }
 	
 	
@@ -84,6 +98,33 @@ public class RestEndPoint {
 			Long ownerID = Long.parseLong(ownerId);
 			Double dPrice = Double.parseDouble(price);
 			return server.postItem(itemName, ownerID, status, comments, figUrl, dPrice, other);
+		}catch(Exception ex){
+			throw ex;
+		}
+    }
+	
+	@POST
+	@Path("/transaction/create")
+    @Produces({ MediaType.APPLICATION_JSON })
+    @Consumes({ MediaType.APPLICATION_FORM_URLENCODED,
+            MediaType.APPLICATION_JSON })
+    public TransactionCreateResponse createTransaction(@FormParam("seller_id") String sellerId,
+    		@FormParam("buyer_id") String buyerId,
+    		@FormParam("latitude") String latitude,
+    		@FormParam("longtitude") String longtitude,
+    		@FormParam("amount") String amount,
+    		@FormParam("itemLists") String itemLists
+    		) throws Exception{
+		logger.info(String.format("### checking parmeters: seller_id=%s, buyer_id=%s, "
+				+"latitude = %s, longtitude=%s, amount=%s, itemLists=%s", sellerId,
+				buyerId,latitude,longtitude,amount,itemLists));
+		try{
+			return server.createTransaction(Long.parseLong(sellerId),
+					Long.parseLong(sellerId),
+					Double.parseDouble(latitude),
+					Double.parseDouble(longtitude),
+					Double.parseDouble(amount),
+					itemLists);
 		}catch(Exception ex){
 			throw ex;
 		}
