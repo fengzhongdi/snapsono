@@ -1,4 +1,4 @@
-package snap.sono.demo.data;
+package mmkms.data;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;

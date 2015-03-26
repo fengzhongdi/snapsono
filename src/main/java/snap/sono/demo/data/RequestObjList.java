@@ -7,19 +7,23 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement
-public class SnapsonoItems {
-	private List<SnapsonoItem> list;
+public class RequestObjList {
+	private List<RequestObj> list = new ArrayList<RequestObj>();
 	
-	public SnapsonoItems(){
-		list = new ArrayList<SnapsonoItem>();
+	public RequestObjList(){
+		
 	}
 	
-	public SnapsonoItems(List<SnapsonoItem>list){
+	public RequestObjList( List<RequestObj> list){
 		this.list = list;
 	}
 	
+	public void add(RequestObj requestObj){
+		this.list.add(requestObj);
+	}
+	
 	@XmlElement(nillable = false, required = false)
-	public List<SnapsonoItem> getList(){
+	public List<RequestObj> getRequestObjList(){
 		return this.list;
 	}
 }

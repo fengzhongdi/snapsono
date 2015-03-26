@@ -2,11 +2,10 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-	<groupId>snapsono</groupId>
-	<artifactId>snapsono</artifactId>
+	<groupId>mmkms</groupId>
+	<artifactId>mmkms</artifactId>
 	<packaging>war</packaging>
 
-	<name>Snapsono</name>
 	<url>http://maven.apache.org</url>
 
 	<properties>
@@ -283,4 +282,5 @@
 		</plugins>
 	</build>
 	<version>v1</version>
+	<name>keep_my_seat</name>
 </project>
