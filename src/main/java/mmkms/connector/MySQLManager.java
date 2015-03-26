@@ -1,4 +1,4 @@
-package snap.sono.demo.connecter;
+package mmkms.connector;
 import java.sql.Connection;
 import java.sql.Driver;
 import java.sql.DriverManager;
@@ -13,7 +13,7 @@ import snap.sono.demo.data.SnapsonoItem;
 import snap.sono.demo.data.SnapsonoItems;
 import snap.sono.demo.setting.SnapSessionSettings;
 
-public class SnapMySQLManager {
+public class MySQLManager {
 
 	private static Logger logger = Logger.getLogger("SnapMySQLManager");
 
@@ -23,10 +23,8 @@ public class SnapMySQLManager {
 			String DB_URL = settings.get("url");
 			String USER = settings.get("user");
 			String PASS = settings.get("pwd");
-			logger.info("About to regist");
 			Driver driver =(Driver) Class.forName("com.mysql.jdbc.Driver").newInstance();
 			DriverManager.registerDriver(driver);
-			logger.info("finish regist, about to connect");
 			//DriverManager.getConnection(url)
 			//return DriverManager.getConnection(DB_URL,USER,PASS);
 			String connStr = String.format("%s?user=%s&password=%s",DB_URL,USER,PASS);
@@ -43,10 +41,8 @@ public class SnapMySQLManager {
 		Statement stmt = null;
 		try {
 			logger.info(">>> RunUpdateSql. Ask manager to get connected");
-			conn = SnapMySQLManager.getConnection();
-			logger.info("Get connected");
+			conn = MySQLManager.getConnection();
 			stmt = conn.createStatement();
-			
 			logger.info("About to execute " + sql);
 			stmt.execute(sql);
 			logger.info("Finish sql ");
@@ -64,7 +60,7 @@ public class SnapMySQLManager {
 		Statement stmt = null;
 		try {
 			logger.info(">>> RunUpdateSqls. Ask manager to get connected");
-			conn = SnapMySQLManager.getConnection();
+			conn = MySQLManager.getConnection();
 			logger.info("Get connected");
 			stmt = conn.createStatement();
 			

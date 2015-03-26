@@ -1,7 +1,9 @@
 package snap.sono.demo.server;
 
-import snap.sono.demo.data.BaseResponse; 
-import snap.sono.demo.data.BasicIDNameOBJ;
+import javax.ws.rs.QueryParam;
+
+import mmkms.data.BaseResponse;
+import mmkms.data.BasicIDNameOBJ;
 import snap.sono.demo.data.SnapProfilesBO;
 import snap.sono.demo.data.SnapsonoItems;
 import snap.sono.demo.data.TransactionCreateResponse;
@@ -18,4 +20,10 @@ public interface GeneralServer {
 
 	public TransactionCreateResponse createTransaction(Long sellerId, Long userId,
 			double latitude, double longtitude, double amount, String itemLists);
+	
+	public TransactionCreateResponse updateSTransactionStatus(Long transactionId, String status);
+
+	public BaseResponse postRequest(long snap_id, double latitude, double longtitude, String event) throws Exception;
+	
+	public BaseResponse deleteRequest(String uuid, double latitude, double longtitude) throws Exception;
 }

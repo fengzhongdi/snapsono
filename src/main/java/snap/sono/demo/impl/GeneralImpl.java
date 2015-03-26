@@ -6,12 +6,14 @@ import java.sql.Statement;
 import java.util.logging.*;
 import java.util.*;
 
+import mmkms.data.BaseResponse;
+import mmkms.data.BasicIDNameOBJ;
+
 import org.apache.commons.httpclient.HttpStatus;
 
 import snap.sono.demo.connecter.SnapMySQLManager;
-import snap.sono.demo.data.BaseResponse;
-import snap.sono.demo.data.BasicIDNameOBJ;
 import snap.sono.demo.data.Constants;
+import snap.sono.demo.data.RequestObj;
 import snap.sono.demo.data.SnapProfile;
 import snap.sono.demo.data.SnapProfilesBO;
 import snap.sono.demo.data.SnapsonoItem;
@@ -21,6 +23,8 @@ import snap.sono.demo.server.GeneralServer;
 
 public class GeneralImpl implements GeneralServer {
 	private Logger logger = Logger.getLogger("GeneralImpl");
+	private static Hashtable<Integer, Hashtable<Integer, Hashtable<String, RequestObj>>> taskPool = 
+			new Hashtable<Integer, Hashtable<Integer, Hashtable<String, RequestObj>>>();
 
 	@Override
 	public SnapProfilesBO getSnapProfilesBO() {
@@ -157,19 +161,19 @@ public class GeneralImpl implements GeneralServer {
 	}
 
 	@Override
-	public TransactionCreateResponse createTransaction(Long sellerId, Long userId,
+	public TransactionCreateResponse createTransaction(Long sellerId, Long buyerId,
 			double latitude, double longtitude, double amount, String itemLists) {
 		String msg = "";
 		Connection conn = null;
 		Statement stmt = null;
 		ResultSet rs = null;
 		try {
-			logger.info(">>> Enter getLoginInfo. Ask manager to get connected");
+			logger.info(">>> Enter TransactionCreateResponse. Ask manager to get connected");
 			String uuid = String.valueOf(UUID.randomUUID());
 			String sql = String
 					.format("insert into snapsono.dim_transactions_info (seller_id,buyer_id,location_latitude,location_longtitude,transaction_amount,hash_id)"
-							+ " values (%s,%s,%s,%s,%s,%s,%s,%s,'%s')",
-							sellerId,userId,latitude,longtitude,amount,uuid);
+							+ " values (%s,%s,%s,%s,%s,'%s')",
+							sellerId,buyerId,latitude,longtitude,amount,uuid);
 			SnapMySQLManager.runUpdateSql(sql);
 			sql = String.format("select transaction_id from snapsono.dim_transactions_info where hash_id = '%s'", uuid);
 			conn = SnapMySQLManager.getConnection();
@@ -182,7 +186,7 @@ public class GeneralImpl implements GeneralServer {
 			while (rs.next()) {
 				transactionId = rs.getLong("transaction_id");
 			}
-			logger.info("Found transactionId = %d " + transactionId);
+			logger.info("Found transactionId = " + transactionId);
 			
 			if(transactionId<1)
 				throw new Exception("Cannot initialize transactions!!!");
@@ -198,9 +202,11 @@ public class GeneralImpl implements GeneralServer {
 				sqls.add(sql);
 			}
 			sqls.add(String.format("insert into snapsono.dim_transactions_status_info (transaction_id, status)"
-					+" values (%s, %s) ", transactionId, Constants.INITIAL));
+					+" values (%s, '%s') ", transactionId, Constants.INITIAL));
 			
-			logger.info("<<< EXIT postItem");
+			SnapMySQLManager.runUpdateSqls(sqls);
+			
+			logger.info("<<< EXIT createTransaction");
 			return new TransactionCreateResponse(HttpStatus.SC_OK, "Transaction created, with id = "+transactionId,transactionId);
 		} catch (Exception e) {
 			logger.severe(e.getMessage());
@@ -208,6 +214,70 @@ public class GeneralImpl implements GeneralServer {
 			e.printStackTrace();
 		}
 		return new TransactionCreateResponse(HttpStatus.SC_BAD_REQUEST, msg, -1l);
+	}
+
+	@Override
+	public TransactionCreateResponse updateSTransactionStatus(
+			Long transactionId, String status) {
+		String msg = "";
+		try {
+			logger.info(">>> Enter updateSTransactionStatus.");			
+			String sql = String.format(" insert into snapsono.dim_transactions_status_info "
+					+"(transaction_id, status) values (%s,'%s')", transactionId,status);
+			SnapMySQLManager.runUpdateSql(sql);
+			logger.info("<<< EXIT TransactionCreateResponse");
+			return new TransactionCreateResponse(HttpStatus.SC_OK, "Transaction updated, with id = "+transactionId,transactionId);
+		} catch (Exception e) {
+			logger.severe(e.getMessage());
+			msg = e.getMessage();
+			e.printStackTrace();
+		}
+		return new TransactionCreateResponse(HttpStatus.SC_BAD_REQUEST, msg, -1l);
+	}
+
+	@Override
+	public BaseResponse postRequest(long snap_id, double latitude,
+			double longtitude, String event) throws Exception {
+		String uuid = UUID.randomUUID().toString();
+		try
+		{
+			RequestObj request = new RequestObj(latitude, longtitude, snap_id, event, uuid);
+			int lat = (int)latitude, lon = (int)longtitude;
+			if (!taskPool.containsKey(lat)){
+				Hashtable<Integer, Hashtable<String, RequestObj>> hash1 = new 
+						Hashtable<Integer, Hashtable<String, RequestObj>>();
+				Hashtable<String, RequestObj> hash2 = new Hashtable<String, RequestObj>();
+				hash2.put(uuid, request);
+				hash1.put(lon, hash2);
+				taskPool.put(lat, hash1);
+			}else{
+				if(!taskPool.get(lat).containsKey(lon)){
+					Hashtable<String, RequestObj> hash2 = new Hashtable<String, RequestObj>();
+					hash2.put(uuid, request);
+					taskPool.get(lat).put(lon, hash2);
+				}else{
+					taskPool.get(lat).get(lon).put(uuid, request);
+				}
+			}
+		}catch(Exception e){
+			return new BaseResponse(HttpStatus.SC_BAD_REQUEST,e.getMessage());
+		}
+	    return new BaseResponse(HttpStatus.SC_OK, uuid+" is created!");
+	}
+
+	@Override
+	public BaseResponse deleteRequest(String uuid, double latitude,
+			double longtitude) throws Exception {
+		try{
+			int lat = (int)latitude, lon = (int)longtitude;
+			if(taskPool.containsKey(lat) && taskPool.get(lat).containsKey(lon)
+					&& taskPool.get(lat).get(lon).containsKey(uuid)){
+				taskPool.get(lat).get(lon).remove(uuid);
+			}
+		}catch(Exception e){
+			return new BaseResponse(HttpStatus.SC_BAD_REQUEST,e.getMessage());
+		}
+		return new BaseResponse(HttpStatus.SC_OK, uuid+" is deleted!");
 	}
 
 }

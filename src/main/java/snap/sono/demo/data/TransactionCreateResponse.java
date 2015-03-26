@@ -3,6 +3,8 @@ package snap.sono.demo.data;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
+import mmkms.data.BaseResponse;
+
 @XmlRootElement
 public class TransactionCreateResponse extends BaseResponse{
 	private long transactionId;
