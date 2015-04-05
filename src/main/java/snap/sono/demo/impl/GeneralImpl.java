@@ -241,7 +241,7 @@ public class GeneralImpl implements GeneralServer {
 		String uuid = UUID.randomUUID().toString();
 		try
 		{
-			RequestObj request = new RequestObj(latitude, longtitude, snap_id, event, uuid);
+			RequestObj request = null;//new RequestObj(latitude, longtitude, snap_id, event, uuid);
 			int lat = (int)latitude, lon = (int)longtitude;
 			if (!taskPool.containsKey(lat)){
 				Hashtable<Integer, Hashtable<String, RequestObj>> hash1 = new 
