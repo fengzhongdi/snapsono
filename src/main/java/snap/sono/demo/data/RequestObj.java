@@ -7,21 +7,24 @@ import javax.xml.bind.annotation.XmlRootElement;
 public class RequestObj {
 	private double latitude;
 	private double longtitude;
-	private long snap_id;
-	private String event;
-	private String uuid;
+	private long sellerId;
+	private long placeId;
+	private String status;
+	private String imgUrl;
+	private String description;
 
 	public RequestObj() {
 
 	}
 
-	public RequestObj(double latitude, double longtitude, long snap_id,
-			String event, String uuid) {
+	public RequestObj(long sellerId, double latitude, double longtitude,
+	 long placeId,String status,String description, String imgUrl) {
 		this.latitude = latitude;
-		this.longtitude = longtitude;
-		this.snap_id = snap_id;
-		this.event = event;
-		this.uuid = uuid;
+		this.longtitude = longtitude;this.sellerId = sellerId;
+		this.placeId=placeId;
+		this.status = status;
+		this.imgUrl = imgUrl;
+		this.description = description;
 	}
 
 	@XmlElement(nillable = false, required = false)
@@ -35,16 +38,27 @@ public class RequestObj {
 	}
 
 	@XmlElement(nillable = false, required = false)
-	public Long getSnapId() {
-		return this.snap_id;
+	public Long getSellerId() {
+		return this.sellerId;
+	}
+	
+	@XmlElement(nillable = false, required = false)
+	public Long getPlaceId() {
+		return this.placeId;
 	}
 
 	@XmlElement(nillable = false, required = false)
-	public String getEvent() {
-		return this.event;
+	public String getStatus() {
+		return this.status;
 	}
+	
 	@XmlElement(nillable = false, required = false)
-	public String getUUID() {
-		return this.uuid;
+	public String getImgUrl() {
+		return this.imgUrl;
+	}
+	
+	@XmlElement(nillable = false, required = false)
+	public String getDesc() {
+		return this.description;
 	}
 }
